@@ -211,6 +211,10 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
       if (transcription && transcription.trim()) {
         // Append to existing input with a space separator if there's already text
         setInput(prev => prev.trim() ? `${prev} ${transcription}` : transcription);
+        // Focus textarea after transcription so Enter can send
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 100);
       }
       setIsRecording(false);
       isSpaceHeldRef.current = false;
