@@ -2,11 +2,13 @@ import { ChatOpenAI } from '@langchain/openai';
 import { HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages';
 import { generateMermaidCode } from '@/utils/mermaidGenerator';
 import type { DesignElement } from '@/types';
+import type { InterviewTopic } from '@/data/interviewTopics';
 
 export class ConversationManager {
   private llm: ChatOpenAI;
   private conversationHistory: (HumanMessage | AIMessage)[] = [];
-  private readonly MAX_MESSAGES = 10; // ~5 exchanges
+  private readonly MAX_MESSAGES = 20; // Keep more history for interview context
+  private currentTopic: InterviewTopic | null = null;
 
   constructor(apiKey: string, model: string = 'gpt-4o') {
     this.llm = new ChatOpenAI({
@@ -21,19 +23,23 @@ export class ConversationManager {
    * Starts an interview with a deliberately vague opener.
    * Requirements are disclosed progressively ONLY when the candidate asks.
    */
-  async startInterview(designElements: DesignElement[]): Promise<string> {
+  async startInterview(topic: InterviewTopic, designElements: DesignElement[]): Promise<string> {
     this.clearHistory();
+    this.currentTopic = topic;
     const mermaidCode = generateMermaidCode(designElements);
-    const systemPrompt = this.buildInterviewSystemPrompt(mermaidCode);
+    const systemPrompt = this.buildInterviewSystemPrompt(mermaidCode, topic);
 
     const opener =
       [
-        '**Interviewer:** Welcome. We’ll do a system design interview in four phases: requirements → high-level → deep dives → resilience & cost.',
-        'We’ll go one question at a time. I’ll keep things intentionally vague until you ask for specifics.',
+        `**Interviewer:** Welcome! Today we'll design **${topic.title}**.`,
         '',
-        'Problem: **Design a globally available URL shortener with custom aliases and basic analytics.**',
+        'The interview will flow through: **Requirements → High-Level Design → Deep Dives → Trade-offs & Scale**.',
         '',
-        '**Question 1 — Clarification:** Before proposing an architecture, what key questions do you have? Focus on traffic, SLAs, data model, multi-region behavior, and analytics granularity.'
+        `**Problem:** ${topic.description}`,
+        '',
+        `**Key Areas:** ${topic.keyAreas.join(', ')}`,
+        '',
+        '**Question 1:** Before we jump into the design, what are the key clarifying questions you need answered? Think about scale, SLAs, features, and constraints.'
       ].join('\n');
 
     // Seed the conversation (system + first AI question)
@@ -44,10 +50,11 @@ export class ConversationManager {
   /**
    * Candidate sends a message; interviewer replies with the next probe/follow-up.
    * Interviewer reveals constraints only when asked (per the system prompt rules).
+   * The current canvas state is always included so the interviewer can see design changes.
    */
   async chat(candidateMessage: string, designElements: DesignElement[]): Promise<string> {
     const mermaidCode = generateMermaidCode(designElements);
-    const systemPrompt = this.buildInterviewSystemPrompt(mermaidCode);
+    const systemPrompt = this.buildInterviewSystemPrompt(mermaidCode, this.currentTopic);
 
     const messages = [
       new SystemMessage(systemPrompt),
@@ -75,16 +82,26 @@ export class ConversationManager {
   }
 
   // ==================== Prompt builder with Progressive Disclosure ====================
-  private buildInterviewSystemPrompt(mermaidCode: string): string {
+  private buildInterviewSystemPrompt(mermaidCode: string, topic: InterviewTopic | null): string {
+    const topicContext = topic ? `
+**Interview Topic:** ${topic.title}
+**Problem:** ${topic.description}
+**Key Areas to Cover:** ${topic.keyAreas.join(', ')}
+` : '';
+
     return `
 You are a **senior system design interviewer** running a realistic interview. Speak naturally and ask **one** focused
 question per turn. Start **vague** and **only reveal requirements when the candidate explicitly asks**. Reveal small,
-targeted batches of constraints (numbers/SLAs) that match the candidate’s question. Do not dump everything.
+targeted batches of constraints (numbers/SLAs) that match the candidate's question. Do not dump everything.
 
-Current Design (Mermaid):
+${topicContext}
+
+**Current Design State (Mermaid - Updated with every message):**
 \`\`\`mermaid
 ${mermaidCode}
 \`\`\`
+
+**IMPORTANT:** The diagram above represents the candidate's CURRENT design. It updates automatically when they add/remove components. Reference specific nodes/edges when providing feedback (e.g., "I see you've added a Cache between API_Gateway and Database...")
 
 ### Interview Style
 - One question per turn; short, conversational, and tailored to the candidate’s last answer.

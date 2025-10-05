@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Send, ChevronDown, ChevronUp, Trash2, Play } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useDesignStore } from '@/store/designStore';
 import { getLangChainService } from '@/services/langchainService';
 import type { ChatMessage } from '@/types';
+import type { InterviewTopic } from '@/data/interviewTopics';
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -16,13 +17,15 @@ interface Message {
 
 interface ChatPanelProps {
   onResize?: () => void;
+  selectedTopic: InterviewTopic | null;
 }
 
-export const ChatPanel = ({ onResize }: ChatPanelProps) => {
+export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
   const { user } = useAuthStore();
   const { elements } = useCanvasStore();
   const { currentDesign, updateDesign } = useDesignStore();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [interviewStarted, setInterviewStarted] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [panelHeight, setPanelHeight] = useState(300);
@@ -144,11 +147,48 @@ export const ChatPanel = ({ onResize }: ChatPanelProps) => {
     }
   };
 
+  const handleStartInterview = async () => {
+    if (!selectedTopic || !user?.llmApiKey) return;
+
+    setIsLoading(true);
+    try {
+      const langChainService = getLangChainService(user.llmApiKey, user.llmModel);
+      const welcomeMessage = await langChainService.startInterview(selectedTopic, elements);
+
+      const assistantMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: welcomeMessage,
+        timestamp: Date.now(),
+      };
+
+      setMessages([assistantMessage]);
+      setInterviewStarted(true);
+
+      // Save to design
+      if (currentDesign && user) {
+        const chatHistory: ChatMessage[] = [
+          {
+            role: 'assistant',
+            content: welcomeMessage,
+            timestamp: Date.now(),
+          },
+        ];
+        updateDesign(user.uid, currentDesign.id, { chatHistory });
+      }
+    } catch (error) {
+      console.error('Start interview error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleClearHistory = () => {
     if (user?.llmApiKey) {
       const langChainService = getLangChainService(user.llmApiKey, user.llmModel);
       langChainService.clearHistory();
       setMessages([]);
+      setInterviewStarted(false);
 
       // Clear from design
       if (currentDesign && user) {
@@ -224,10 +264,25 @@ export const ChatPanel = ({ onResize }: ChatPanelProps) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
+        {messages.length === 0 && selectedTopic && !interviewStarted && (
           <div className="text-center text-gray-500 mt-8">
-            <p className="text-lg font-medium">Ask me anything about your system design!</p>
-            <p className="text-sm mt-2">I can help with architecture, scalability, best practices, and more.</p>
+            <p className="text-lg font-medium">Ready to start: {selectedTopic.title}</p>
+            <p className="text-sm mt-2 mb-4">{selectedTopic.description}</p>
+            <button
+              onClick={handleStartInterview}
+              disabled={isLoading || !user?.llmApiKey}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Play className="w-5 h-5" />
+              Start Interview
+            </button>
+          </div>
+        )}
+
+        {messages.length === 0 && !selectedTopic && (
+          <div className="text-center text-gray-500 mt-8">
+            <p className="text-lg font-medium">Select an Interview Topic</p>
+            <p className="text-sm mt-2">Choose a topic from the left panel to begin your system design interview.</p>
           </div>
         )}
 

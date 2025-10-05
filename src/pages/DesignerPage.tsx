@@ -8,6 +8,9 @@ import { Canvas } from '@/components/canvas/Canvas';
 import { ComponentPalette } from '@/components/canvas/ComponentPalette';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { DesignsList } from '@/components/design/DesignsList';
+import { InterviewTopics } from '@/components/interview/InterviewTopics';
+import type { InterviewTopic } from '@/data/interviewTopics';
+import { Shapes, MessageSquare } from 'lucide-react';
 export const DesignerPage = () => {
   const { user } = useAuthStore();
   const { currentDesign, saveDesign, loadDesign, loadLastDesign, createNewDesign } = useDesignStore();
@@ -15,6 +18,8 @@ export const DesignerPage = () => {
   const [showDesignsList, setShowDesignsList] = useState(false);
   const [designTitle, setDesignTitle] = useState('Untitled Design');
   const [canvasSize, setCanvasSize] = useState({ width: 1400, height: 900 });
+  const [leftPanelTab, setLeftPanelTab] = useState<'components' | 'interview'>('components');
+  const [selectedTopic, setSelectedTopic] = useState<InterviewTopic | null>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const hasUnsavedChanges = useRef(false);
   const isInitialLoad = useRef(true);
@@ -140,8 +145,44 @@ export const DesignerPage = () => {
       />
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className="w-64 bg-white border-r border-gray-200 overflow-y-auto">
-          <ComponentPalette />
+        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+          {/* Tab Switcher */}
+          <div className="flex border-b border-gray-200">
+            <button
+              onClick={() => setLeftPanelTab('components')}
+              className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                leftPanelTab === 'components'
+                  ? 'bg-white text-primary-600 border-b-2 border-primary-600'
+                  : 'bg-gray-50 text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Shapes className="w-4 h-4" />
+              Components
+            </button>
+            <button
+              onClick={() => setLeftPanelTab('interview')}
+              className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                leftPanelTab === 'interview'
+                  ? 'bg-white text-primary-600 border-b-2 border-primary-600'
+                  : 'bg-gray-50 text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              Interview
+            </button>
+          </div>
+
+          {/* Panel Content */}
+          <div className="flex-1 overflow-hidden">
+            {leftPanelTab === 'components' ? (
+              <ComponentPalette />
+            ) : (
+              <InterviewTopics
+                onSelectTopic={setSelectedTopic}
+                selectedTopic={selectedTopic}
+              />
+            )}
+          </div>
         </aside>
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
@@ -150,7 +191,7 @@ export const DesignerPage = () => {
             <Canvas width={canvasSize.width} height={canvasSize.height} />
           </div>
           <div className="flex-shrink-0">
-            <ChatPanel onResize={updateCanvasSize} />
+            <ChatPanel onResize={updateCanvasSize} selectedTopic={selectedTopic} />
           </div>
         </main>
       </div>
