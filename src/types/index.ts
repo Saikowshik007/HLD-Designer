@@ -4,6 +4,10 @@ export interface User {
   displayName: string | null;
   llmApiKey?: string;
   llmModel?: string;
+  voiceLanguage?: string;
+  voiceAutoSpeak?: boolean;
+  voiceRate?: number;
+  voicePitch?: number;
 }
 
 export interface DesignElement {
@@ -31,12 +35,6 @@ export interface DesignElement {
   shapeType?: 'database' | 'server' | 'cache' | 'queue' | 'cloud' | 'storage';
 }
 
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;
-}
-
 export interface Design {
   id: string;
   userId: string;
@@ -44,7 +42,6 @@ export interface Design {
   elements: DesignElement[];
   createdAt: number;
   updatedAt: number;
-  chatHistory?: ChatMessage[];
   metadata?: {
     description?: string;
     tags?: string[];

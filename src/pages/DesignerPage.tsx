@@ -145,30 +145,31 @@ export const DesignerPage = () => {
       />
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+        {/* Left sidebar - Hidden on mobile, shows on md+ */}
+        <aside className="hidden md:flex md:w-56 lg:w-64 bg-white border-r border-gray-200 flex-col">
           {/* Tab Switcher */}
           <div className="flex border-b border-gray-200">
             <button
               onClick={() => setLeftPanelTab('components')}
-              className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              className={`flex-1 px-2 lg:px-4 py-3 text-xs lg:text-sm font-medium flex items-center justify-center gap-1 lg:gap-2 transition-colors ${
                 leftPanelTab === 'components'
                   ? 'bg-white text-primary-600 border-b-2 border-primary-600'
                   : 'bg-gray-50 text-gray-600 hover:text-gray-900'
               }`}
             >
               <Shapes className="w-4 h-4" />
-              Components
+              <span className="hidden lg:inline">Components</span>
             </button>
             <button
               onClick={() => setLeftPanelTab('interview')}
-              className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              className={`flex-1 px-2 lg:px-4 py-3 text-xs lg:text-sm font-medium flex items-center justify-center gap-1 lg:gap-2 transition-colors ${
                 leftPanelTab === 'interview'
                   ? 'bg-white text-primary-600 border-b-2 border-primary-600'
                   : 'bg-gray-50 text-gray-600 hover:text-gray-900'
               }`}
             >
               <MessageSquare className="w-4 h-4" />
-              Interview
+              <span className="hidden lg:inline">Interview</span>
             </button>
           </div>
 

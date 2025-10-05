@@ -1,19 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, ChevronDown, ChevronUp, Trash2, Play } from 'lucide-react';
+import { Send, ChevronDown, ChevronUp, Trash2, Play, Mic, Square, Volume2, VolumeX } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useDesignStore } from '@/store/designStore';
 import { getLangChainService } from '@/services/langchainService';
-import type { ChatMessage } from '@/types';
+import { getVoiceService } from '@/services/voiceService';
+import { chatService, type ChatMessage } from '@/services/chatService';
 import type { InterviewTopic } from '@/data/interviewTopics';
 import ReactMarkdown from 'react-markdown';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;
-}
 
 interface ChatPanelProps {
   onResize?: () => void;
@@ -23,8 +18,8 @@ interface ChatPanelProps {
 export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
   const { user } = useAuthStore();
   const { elements } = useCanvasStore();
-  const { currentDesign, updateDesign } = useDesignStore();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { currentDesign } = useDesignStore();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,8 +28,13 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
   const [dragStartHeight, setDragStartHeight] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(user?.voiceAutoSpeak || false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const voiceService = useRef(getVoiceService(user?.voiceLanguage || 'en-US')).current;
+  const isSpaceHeldRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,18 +46,24 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
 
   // Load chat history when design changes
   useEffect(() => {
-    if (currentDesign?.chatHistory) {
-      const loadedMessages: Message[] = currentDesign.chatHistory.map((msg, idx) => ({
-        id: `${msg.timestamp}-${idx}`,
-        role: msg.role,
-        content: msg.content,
-        timestamp: msg.timestamp,
-      }));
-      setMessages(loadedMessages);
-    } else {
-      setMessages([]);
-    }
-  }, [currentDesign?.id]);
+    const loadMessages = async () => {
+      if (currentDesign && user) {
+        try {
+          const loadedMessages = await chatService.getMessagesForDesign(user.uid, currentDesign.id);
+          setMessages(loadedMessages);
+          setInterviewStarted(loadedMessages.length > 0);
+        } catch (error) {
+          console.error('Error loading messages:', error);
+          setMessages([]);
+        }
+      } else {
+        setMessages([]);
+        setInterviewStarted(false);
+      }
+    };
+
+    loadMessages();
+  }, [currentDesign?.id, user]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -95,87 +101,71 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
   }, [isResizing, dragStartY, dragStartHeight, onResize]);
 
   const handleSend = async () => {
-    if (!input.trim() || !user?.llmApiKey) return;
+    if (!input.trim() || !user?.llmApiKey || !currentDesign) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input.trim(),
-      timestamp: Date.now(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const userMessageContent = input.trim();
     setInput('');
     setIsLoading(true);
 
     try {
+      // Save user message to Firebase
+      const userMessage = await chatService.saveMessage(
+        user.uid,
+        currentDesign.id,
+        'user',
+        userMessageContent
+      );
+
+      setMessages((prev) => [...prev, userMessage]);
+
       // Use LangChain for conversation management
       const langChainService = getLangChainService(user.llmApiKey, user.llmModel);
-      const responseText = await langChainService.chat(input.trim(), elements);
+      const responseText = await langChainService.chat(userMessageContent, elements);
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: responseText,
-        timestamp: Date.now(),
-      };
+      // Save assistant message to Firebase
+      const assistantMessage = await chatService.saveMessage(
+        user.uid,
+        currentDesign.id,
+        'assistant',
+        responseText
+      );
 
-      setMessages((prev) => {
-        const newMessages = [...prev, assistantMessage];
-        // Save to design
-        if (currentDesign && user) {
-          const chatHistory: ChatMessage[] = newMessages.map(msg => ({
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp,
-          }));
-          updateDesign(user.uid, currentDesign.id, { chatHistory });
-        }
-        return newMessages;
-      });
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `Error: ${error instanceof Error ? error.message : 'Please try again.'}`,
-        timestamp: Date.now(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      // Save error message to Firebase
+      if (currentDesign && user) {
+        const errorMessage = await chatService.saveMessage(
+          user.uid,
+          currentDesign.id,
+          'assistant',
+          `Error: ${error instanceof Error ? error.message : 'Please try again.'}`
+        );
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleStartInterview = async () => {
-    if (!selectedTopic || !user?.llmApiKey) return;
+    if (!selectedTopic || !user?.llmApiKey || !currentDesign) return;
 
     setIsLoading(true);
     try {
       const langChainService = getLangChainService(user.llmApiKey, user.llmModel);
       const welcomeMessage = await langChainService.startInterview(selectedTopic, elements);
 
-      const assistantMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: welcomeMessage,
-        timestamp: Date.now(),
-      };
+      // Save welcome message to Firebase
+      const assistantMessage = await chatService.saveMessage(
+        user.uid,
+        currentDesign.id,
+        'assistant',
+        welcomeMessage
+      );
 
       setMessages([assistantMessage]);
       setInterviewStarted(true);
-
-      // Save to design
-      if (currentDesign && user) {
-        const chatHistory: ChatMessage[] = [
-          {
-            role: 'assistant',
-            content: welcomeMessage,
-            timestamp: Date.now(),
-          },
-        ];
-        updateDesign(user.uid, currentDesign.id, { chatHistory });
-      }
     } catch (error) {
       console.error('Start interview error:', error);
     } finally {
@@ -183,26 +173,131 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
     }
   };
 
-  const handleClearHistory = () => {
-    if (user?.llmApiKey) {
+  const handleClearHistory = async () => {
+    if (user?.llmApiKey && currentDesign) {
       const langChainService = getLangChainService(user.llmApiKey, user.llmModel);
       langChainService.clearHistory();
       setMessages([]);
       setInterviewStarted(false);
 
-      // Clear from design
-      if (currentDesign && user) {
-        updateDesign(user.uid, currentDesign.id, { chatHistory: [] });
+      // Delete all messages from Firebase
+      try {
+        await chatService.deleteMessagesForDesign(user.uid, currentDesign.id);
+      } catch (error) {
+        console.error('Error clearing chat history:', error);
       }
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Enter to send (Shift+Enter for new line)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
+
+  const handleMicClick = async () => {
+    if (isRecording) {
+      voiceService.stopRecording();
+      setIsRecording(false);
+      return;
+    }
+
+    setIsRecording(true);
+
+    try {
+      const transcription = await voiceService.startRecording();
+      if (transcription && transcription.trim()) {
+        // Append to existing input with a space separator if there's already text
+        setInput(prev => prev.trim() ? `${prev} ${transcription}` : transcription);
+      }
+      setIsRecording(false);
+      isSpaceHeldRef.current = false;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to record audio';
+      if (!errorMsg.includes('No speech detected') && !errorMsg.includes('Recording stopped')) {
+        alert(errorMsg);
+      }
+      setIsRecording(false);
+      isSpaceHeldRef.current = false;
+    }
+  };
+
+  const toggleAutoSpeak = () => {
+    if (autoSpeak) {
+      voiceService.stopSpeaking();
+    }
+    setAutoSpeak(!autoSpeak);
+  };
+
+  // Update voice service language when user settings change
+  useEffect(() => {
+    if (user?.voiceLanguage) {
+      voiceService.setLanguage(user.voiceLanguage);
+    }
+  }, [user?.voiceLanguage]);
+
+  // Update auto-speak when user settings change
+  useEffect(() => {
+    setAutoSpeak(user?.voiceAutoSpeak || false);
+  }, [user?.voiceAutoSpeak]);
+
+  // Auto-speak assistant responses when autoSpeak is enabled
+  useEffect(() => {
+    if (autoSpeak && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === 'assistant' && !isLoading) {
+        voiceService.speak(lastMessage.content, {
+          rate: user?.voiceRate || 0.95,
+          pitch: user?.voicePitch || 1.1,
+        });
+      }
+    }
+  }, [messages, autoSpeak, isLoading, user?.voiceRate, user?.voicePitch]);
+
+  // Global spacebar shortcut for voice input (when not in textarea)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only activate if space is pressed and we're not in the textarea
+      if (
+        e.code === 'Space' &&
+        document.activeElement !== textareaRef.current &&
+        !isSpaceHeldRef.current &&
+        !isRecording &&
+        !isLoading
+      ) {
+        e.preventDefault();
+        isSpaceHeldRef.current = true;
+        handleMicClick();
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      // Stop recording when space is released (only if we started it with space)
+      if (e.code === 'Space' && isSpaceHeldRef.current && isRecording) {
+        e.preventDefault();
+        isSpaceHeldRef.current = false;
+        // Explicitly stop the recording
+        voiceService.stopRecording();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isRecording, isLoading]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      voiceService.dispose();
+    };
+  }, []);
 
   if (isCollapsed) {
     return (
@@ -225,7 +320,7 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
     <div
       ref={panelRef}
       style={{ height: panelHeight }}
-      className="border-t border-gray-200 bg-white flex flex-col"
+      className="border-t border-gray-200 bg-white flex flex-col w-full"
     >
       {/* Resize handle */}
       <div
@@ -234,13 +329,24 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
       />
 
       {/* Header */}
-      <div className="px-4 py-2 border-b border-gray-200 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full" />
-          <h3 className="font-semibold text-gray-800">AI Design Assistant</h3>
-          <span className="text-xs text-gray-500">(LangChain)</span>
+      <div className="px-3 sm:px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
+          <h3 className="font-semibold text-gray-800 text-sm sm:text-base truncate">AI Design Assistant</h3>
+          <span className="text-xs text-gray-500 hidden sm:inline">(LangChain)</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={toggleAutoSpeak}
+            className={`p-1 hover:bg-gray-100 rounded ${autoSpeak ? 'bg-primary-100' : ''}`}
+            title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
+          >
+            {autoSpeak ? (
+              <Volume2 className="w-4 h-4 text-primary-600" />
+            ) : (
+              <VolumeX className="w-4 h-4 text-gray-600" />
+            )}
+          </button>
           {messages.length > 0 && (
             <button
               onClick={handleClearHistory}
@@ -263,7 +369,7 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
         {messages.length === 0 && selectedTopic && !interviewStarted && (
           <div className="text-center text-gray-500 mt-8">
             <p className="text-lg font-medium">Ready to start: {selectedTopic.title}</p>
@@ -325,23 +431,44 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="flex gap-2">
+      <div className="p-2 sm:p-4 border-t border-gray-200">
+        <div className="flex gap-1 sm:gap-2">
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask about your design..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder={
+              isRecording
+                ? 'Listening...'
+                : 'Type (Enter to send, Shift+Enter for new line) or hold Space to speak...'
+            }
+            className="flex-1 px-2 sm:px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm sm:text-base"
             rows={2}
-            disabled={isLoading}
+            disabled={isLoading || isRecording}
           />
           <button
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            onClick={handleMicClick}
+            disabled={isLoading}
+            className={`px-2 sm:px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${
+              isRecording
+                ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse'
+                : 'bg-gray-600 hover:bg-gray-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+            }`}
+            title={isRecording ? 'Stop listening' : 'Start voice input (Chrome)'}
           >
-            <Send className="w-5 h-5" />
+            {isRecording ? (
+              <Square className="w-4 h-4 sm:w-5 sm:h-5" />
+            ) : (
+              <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
+            )}
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={!input.trim() || isLoading || isRecording}
+            className="px-2 sm:px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+          >
+            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>

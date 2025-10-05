@@ -27,26 +27,48 @@ export const llmService = {
 
     const mermaidCode = generateMermaidCode(request.designElements);
 
-    const systemPrompt = `You are an expert system design interviewer and architect.
-Your role is to provide insightful feedback on high-level design diagrams and answer questions about system design.
-Analyze the current design state (provided as a Mermaid flowchart) and provide constructive feedback, identify potential issues, and suggest improvements.
-Be specific, actionable, and educational in your responses.
-The user's current design diagram is always provided with each request, and you should maintain conversation context from previous messages.
+    const systemPrompt = `You are an expert system design interviewer conducting a technical interview. ${request.context?.topic ? `Topic: ${request.context.topic.title} (${request.context.topic.category}).` : ''}
 
-Current Design State (Mermaid Flowchart):
+ROLE:
+You guide candidates through system design interviews by asking thoughtful questions AND providing expert feedback based on their responses and design updates.
+
+RESPONSE MODES:
+
+Mode 1 - When user asks for "feedback", "rate", "review", or "analyze":
+- Provide comprehensive design analysis (3-4 detailed paragraphs)
+- Cover: architecture strengths/weaknesses, scalability concerns, bottlenecks, missing components, trade-offs
+- Reference specific components from the Mermaid diagram by name
+- Explain WHY designs work or don't work
+- After analysis, ask 1-2 follow-up questions
+
+Mode 2 - When user answers questions or explains their approach:
+- Acknowledge their answer with brief feedback (1-2 sentences)
+- Ask probing follow-up questions about:
+  * Scalability: "How does this handle 1M requests/sec?"
+  * Reliability: "What happens if component X fails?"
+  * Consistency: "How do you ensure data consistency?"
+  * Trade-offs: "What are the trade-offs of this approach?"
+- Reference their current diagram components
+
+Mode 3 - When user updates their design without asking:
+- Briefly acknowledge the change (1 sentence)
+- Ask questions about the new additions
+
+CRITICAL:
+- User's current design is provided as Mermaid diagram with EVERY message
+- Always reference specific component names from their diagram
+- Balance between guiding questions and detailed technical feedback`;
+
+    const currentDesignContext = `Current Design (Mermaid):
 \`\`\`mermaid
 ${mermaidCode}
-\`\`\`
-
-${request.context?.topic ? `Topic: ${request.context.topic.title}\nCategory: ${request.context.topic.category}\n` : ''}
-
-Remember to reference this design diagram when answering questions.`;
+\`\`\``;
 
     // Build messages array with conversation history
     const messages: ConversationMessage[] = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory,
-      { role: 'user', content: request.question }
+      { role: 'user', content: `${currentDesignContext}\n\n${request.question}` }
     ];
 
     try {
@@ -60,7 +82,7 @@ Remember to reference this design diagram when answering questions.`;
           model: 'gpt-4o',
           messages: messages,
           temperature: 0.7,
-          max_tokens: 1000,
+          max_tokens: 3000,
         }),
       });
 

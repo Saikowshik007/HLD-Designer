@@ -41,10 +41,24 @@ export const authService = {
       displayName: userCredential.user.displayName,
       llmApiKey: userData?.llmApiKey,
       llmModel: userData?.llmModel || 'gpt-4o',
+      voiceLanguage: userData?.voiceLanguage || 'en-US',
+      voiceAutoSpeak: userData?.voiceAutoSpeak || false,
+      voiceRate: userData?.voiceRate || 0.95,
+      voicePitch: userData?.voicePitch || 1.1,
     };
   },
 
-  async updateUserSettings(userId: string, settings: { llmApiKey?: string; llmModel?: string }): Promise<void> {
+  async updateUserSettings(
+    userId: string,
+    settings: {
+      llmApiKey?: string;
+      llmModel?: string;
+      voiceLanguage?: string;
+      voiceAutoSpeak?: boolean;
+      voiceRate?: number;
+      voicePitch?: number;
+    }
+  ): Promise<void> {
     await setDoc(doc(db, 'users', userId), settings, { merge: true });
   },
 
@@ -64,6 +78,10 @@ export const authService = {
           displayName: firebaseUser.displayName,
           llmApiKey: userData?.llmApiKey,
           llmModel: userData?.llmModel || 'gpt-4o',
+          voiceLanguage: userData?.voiceLanguage || 'en-US',
+          voiceAutoSpeak: userData?.voiceAutoSpeak || false,
+          voiceRate: userData?.voiceRate || 0.95,
+          voicePitch: userData?.voicePitch || 1.1,
         });
       } else {
         callback(null);
@@ -83,6 +101,10 @@ export const authService = {
         displayName: firebaseUser.displayName,
         llmApiKey: userData?.llmApiKey,
         llmModel: userData?.llmModel || 'gpt-4o',
+        voiceLanguage: userData?.voiceLanguage || 'en-US',
+        voiceAutoSpeak: userData?.voiceAutoSpeak || false,
+        voiceRate: userData?.voiceRate || 0.95,
+        voicePitch: userData?.voicePitch || 1.1,
       };
     }
     return null;
