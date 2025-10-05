@@ -8,6 +8,7 @@ interface DesignStore extends DesignState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   saveDesign: (userId: string, elements: DesignElement[], title: string) => Promise<void>;
+  updateDesign: (userId: string, designId: string, updates: Partial<Design>) => Promise<void>;
   loadLastDesign: (userId: string) => Promise<void>;
   loadDesign: (designId: string) => Promise<void>;
   loadUserDesigns: (userId: string) => Promise<void>;
@@ -54,6 +55,30 @@ export const useDesignStore = create<DesignStore>((set, get) => ({
         error: error instanceof Error ? error.message : 'Failed to save design',
         loading: false,
       });
+      throw error;
+    }
+  },
+
+  updateDesign: async (userId, designId, updates) => {
+    try {
+      await designService.updateDesign(designId, updates);
+
+      // Update local state
+      const currentDesign = get().currentDesign;
+      if (currentDesign && currentDesign.id === designId) {
+        set({
+          currentDesign: { ...currentDesign, ...updates, updatedAt: Date.now() },
+        });
+      }
+
+      // Update in designs list
+      set({
+        designs: get().designs.map((d) =>
+          d.id === designId ? { ...d, ...updates, updatedAt: Date.now() } : d
+        ),
+      });
+    } catch (error) {
+      console.error('Failed to update design:', error);
       throw error;
     }
   },

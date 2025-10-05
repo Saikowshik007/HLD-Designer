@@ -8,7 +8,7 @@ export interface User {
 
 export interface DesignElement {
   id: string;
-  type: 'rectangle' | 'circle' | 'text' | 'connector' | 'sticky-note';
+  type: 'rectangle' | 'circle' | 'text' | 'connector' | 'sticky-note' | 'database' | 'cylinder' | 'cloud' | 'server-stack';
   x: number;
   y: number;
   width?: number;
@@ -27,6 +27,14 @@ export interface DesignElement {
   endAnchor?: 'top' | 'right' | 'bottom' | 'left';
   // For sticky notes
   category?: 'functional' | 'non-functional' | 'notes' | 'general';
+  // For custom shapes
+  shapeType?: 'database' | 'server' | 'cache' | 'queue' | 'cloud' | 'storage';
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
 }
 
 export interface Design {
@@ -36,6 +44,7 @@ export interface Design {
   elements: DesignElement[];
   createdAt: number;
   updatedAt: number;
+  chatHistory?: ChatMessage[];
   metadata?: {
     description?: string;
     tags?: string[];

@@ -4,6 +4,9 @@ import { useCanvasStore } from '@/store/canvasStore';
 import type { DesignElement } from '@/types';
 import Konva from 'konva';
 import { StickyNote } from './StickyNote';
+import { DatabaseShape } from './shapes/DatabaseShape';
+import { ServerStackShape } from './shapes/ServerStackShape';
+import { CloudShape } from './shapes/CloudShape';
 
 interface CanvasProps {
   width: number;
@@ -64,14 +67,31 @@ export const Canvas = ({ width, height }: CanvasProps) => {
   }, [zoom, setZoom]);
 
   const isNearEdge = (element: DesignElement, localX: number, localY: number): 'left' | 'right' | 'top' | 'bottom' | null => {
-    if (element.type === 'rectangle') {
+    // Sticky notes don't support connectors
+    if (element.type === 'sticky-note') return null;
+
+    // Database, server-stack, and cloud shapes use rectangular edge detection
+    if (element.type === 'rectangle' || element.type === 'database' || element.type === 'server-stack' || element.type === 'cloud') {
       const w = element.width || 120;
       const h = element.height || 80;
 
-      if (localX < EDGE_THRESHOLD) return 'left';
-      if (localX > w - EDGE_THRESHOLD) return 'right';
-      if (localY < EDGE_THRESHOLD) return 'top';
-      if (localY > h - EDGE_THRESHOLD) return 'bottom';
+      // Calculate distance to each edge
+      const distLeft = localX;
+      const distRight = w - localX;
+      const distTop = localY;
+      const distBottom = h - localY;
+
+      // Find the minimum distance
+      const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+
+      // Only return an edge if we're within EDGE_THRESHOLD of it
+      if (minDist > EDGE_THRESHOLD) return null;
+
+      // Return the closest edge
+      if (minDist === distLeft) return 'left';
+      if (minDist === distRight) return 'right';
+      if (minDist === distTop) return 'top';
+      if (minDist === distBottom) return 'bottom';
     } else if (element.type === 'circle') {
       const r = element.radius || 50;
       const dx = localX - r;
@@ -91,7 +111,17 @@ export const Canvas = ({ width, height }: CanvasProps) => {
   };
 
   const getConnectionPoint = (element: DesignElement, side: 'left' | 'right' | 'top' | 'bottom') => {
-    if (element.type === 'rectangle') {
+    if (element.type === 'cloud') {
+      // Cloud shape has organic edges, adjust connection points to cloud boundary
+      const w = element.width || 140;
+      const h = element.height || 80;
+      switch (side) {
+        case 'left': return { x: element.x + w * 0.15, y: element.y + h * 0.5 };
+        case 'right': return { x: element.x + w * 0.85, y: element.y + h * 0.45 };
+        case 'top': return { x: element.x + w * 0.5, y: element.y + h * 0.15 };
+        case 'bottom': return { x: element.x + w * 0.5, y: element.y + h * 0.75 };
+      }
+    } else if (element.type === 'rectangle' || element.type === 'database' || element.type === 'server-stack') {
       const w = element.width || 120;
       const h = element.height || 80;
       switch (side) {
@@ -115,10 +145,11 @@ export const Canvas = ({ width, height }: CanvasProps) => {
   };
 
   const findNearestSide = (element: DesignElement, targetX: number, targetY: number): 'left' | 'right' | 'top' | 'bottom' => {
-    const centerX = element.type === 'rectangle'
+    const isRectangular = element.type === 'rectangle' || element.type === 'database' || element.type === 'server-stack' || element.type === 'cloud';
+    const centerX = isRectangular
       ? element.x + (element.width || 120) / 2
       : element.x + (element.radius || 50);
-    const centerY = element.type === 'rectangle'
+    const centerY = isRectangular
       ? element.y + (element.height || 80) / 2
       : element.y + (element.radius || 50);
 
@@ -202,7 +233,10 @@ export const Canvas = ({ width, height }: CanvasProps) => {
       const container = stage.container();
       container.style.cursor = 'default';
 
-      if (targetElement && targetElement.id !== draggingConnector.startElementId) {
+      // Only create connector if target is valid (not sticky-note, not same element)
+      if (targetElement &&
+          targetElement.id !== draggingConnector.startElementId &&
+          targetElement.type !== 'sticky-note') {
         const endSide = findNearestSide(targetElement, draggingConnector.currentX, draggingConnector.currentY);
         const endPoint = getConnectionPoint(targetElement, endSide);
 
@@ -402,7 +436,9 @@ export const Canvas = ({ width, height }: CanvasProps) => {
           key={element.id}
           element={element}
           isSelected={isSelected}
-          onSelect={() => selectElement(element.id)}
+          onSelect={() => {
+            selectElement(element.id);
+          }}
           onDragEnd={(e: any) => {
             updateElement(element.id, {
               x: e.target.x(),
@@ -411,7 +447,6 @@ export const Canvas = ({ width, height }: CanvasProps) => {
           }}
           onDblClick={() => {
             setEditingTextId(element.id);
-            selectElement(null);
           }}
         />
       );
@@ -423,6 +458,14 @@ export const Canvas = ({ width, height }: CanvasProps) => {
         x={element.x}
         y={element.y}
         draggable={!draggingConnector}
+        onClick={(e) => {
+          e.cancelBubble = true;
+          selectElement(element.id);
+        }}
+        onTap={(e) => {
+          e.cancelBubble = true;
+          selectElement(element.id);
+        }}
         onDragStart={(e) => {
           const group = e.target as Konva.Group;
           const localPos = group.getRelativePointerPosition();
@@ -430,21 +473,31 @@ export const Canvas = ({ width, height }: CanvasProps) => {
 
           const edge = isNearEdge(element, localPos.x, localPos.y);
           if (edge) {
+            // Prevent drag when starting from edge (we want connector instead)
+            e.target.stopDrag();
             e.cancelBubble = true;
             return;
           }
 
-          e.target.setAttrs({
-            shadowOffsetX: 5,
-            shadowOffsetY: 5,
-            shadowBlur: 10,
+          e.target.to({
+            scaleX: 1.05,
+            scaleY: 1.05,
+            shadowOffsetX: 8,
+            shadowOffsetY: 8,
+            shadowBlur: 15,
+            shadowOpacity: 0.4,
+            duration: 0.1,
           });
         }}
         onDragEnd={(e) => {
-          e.target.setAttrs({
+          e.target.to({
+            scaleX: 1,
+            scaleY: 1,
             shadowOffsetX: 0,
             shadowOffsetY: 0,
             shadowBlur: 0,
+            shadowOpacity: 0,
+            duration: 0.2,
           });
           updateElement(element.id, {
             x: e.target.x(),
@@ -470,6 +523,12 @@ export const Canvas = ({ width, height }: CanvasProps) => {
             container.style.cursor = 'crosshair';
           } else {
             container.style.cursor = 'move';
+            // Subtle hover effect
+            group.to({
+              scaleX: 1.02,
+              scaleY: 1.02,
+              duration: 0.15,
+            });
           }
         }}
         onMouseLeave={(e) => {
@@ -477,6 +536,16 @@ export const Canvas = ({ width, height }: CanvasProps) => {
           if (!stage || draggingConnector) return;
           const container = stage.container();
           container.style.cursor = 'default';
+
+          // Reset hover effect
+          const group = e.target.findAncestor('Group') as Konva.Group;
+          if (group) {
+            group.to({
+              scaleX: 1,
+              scaleY: 1,
+              duration: 0.15,
+            });
+          }
         }}
       >
         {element.type === 'rectangle' && (
@@ -532,6 +601,18 @@ export const Canvas = ({ width, height }: CanvasProps) => {
           </>
         )}
 
+        {element.type === 'database' && (
+          <DatabaseShape element={element} isSelected={isSelected} isEditing={isEditing} />
+        )}
+
+        {element.type === 'server-stack' && (
+          <ServerStackShape element={element} isSelected={isSelected} isEditing={isEditing} />
+        )}
+
+        {element.type === 'cloud' && (
+          <CloudShape element={element} isSelected={isSelected} isEditing={isEditing} />
+        )}
+
         {element.type === 'text' && (
           <Text
             x={0}
@@ -561,6 +642,7 @@ export const Canvas = ({ width, height }: CanvasProps) => {
         fill={isSelected ? '#0284c7' : (element.stroke || '#1f2937')}
         pointerLength={10}
         pointerWidth={10}
+        tension={0.3}
         onClick={(e) => {
           e.cancelBubble = true;
           selectElement(element.id);
@@ -568,6 +650,20 @@ export const Canvas = ({ width, height }: CanvasProps) => {
         onTap={(e) => {
           e.cancelBubble = true;
           selectElement(element.id);
+        }}
+        onMouseEnter={(e) => {
+          const target = e.target;
+          target.to({
+            strokeWidth: isSelected ? 5 : 3,
+            duration: 0.15,
+          });
+        }}
+        onMouseLeave={(e) => {
+          const target = e.target;
+          target.to({
+            strokeWidth: isSelected ? 4 : 2,
+            duration: 0.15,
+          });
         }}
       />
     );

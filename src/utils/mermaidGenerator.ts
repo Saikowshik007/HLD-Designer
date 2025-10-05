@@ -35,15 +35,32 @@ export const generateMermaidCode = (elements: DesignElement[]): string => {
 
     // Determine shape type in Mermaid syntax
     let nodeDefinition = '';
-    if (shape.type === 'rectangle') {
-      nodeDefinition = `    ${nodeId}[${label}]`;
-    } else if (shape.type === 'circle') {
-      nodeDefinition = `    ${nodeId}((${label}))`;
-    } else if (shape.type === 'text') {
-      nodeDefinition = `    ${nodeId}[${label}]`;
+    switch (shape.type) {
+      case 'rectangle':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
+      case 'circle':
+        nodeDefinition = `    ${nodeId}((${label}))`;
+        break;
+      case 'database':
+        nodeDefinition = `    ${nodeId}[(${label})]`;
+        break;
+      case 'cloud':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
+      case 'server-stack':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
+      case 'text':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
+      default:
+        nodeDefinition = `    ${nodeId}[${label}]`;
     }
 
-    mermaidCode += nodeDefinition + '\n';
+    if (nodeDefinition) {
+      mermaidCode += nodeDefinition + '\n';
+    }
   });
 
   // Add connections
@@ -81,15 +98,32 @@ export const generateDetailedMermaidCode = (elements: DesignElement[]): string =
     const label = shape.text || 'Component';
 
     let nodeDefinition = '';
-    if (shape.type === 'rectangle') {
-      nodeDefinition = `    ${nodeId}[${label}]`;
-    } else if (shape.type === 'circle') {
-      nodeDefinition = `    ${nodeId}((${label}))`;
-    } else if (shape.type === 'text') {
-      nodeDefinition = `    ${nodeId}[${label}]`;
+    switch (shape.type) {
+      case 'rectangle':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
+      case 'circle':
+        nodeDefinition = `    ${nodeId}((${label}))`;
+        break;
+      case 'database':
+        nodeDefinition = `    ${nodeId}[(${label})]`;
+        break;
+      case 'cloud':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
+      case 'server-stack':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
+      case 'text':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
+      default:
+        nodeDefinition = `    ${nodeId}[${label}]`;
     }
 
-    mermaidCode += nodeDefinition + '\n';
+    if (nodeDefinition) {
+      mermaidCode += nodeDefinition + '\n';
+    }
   });
 
   // Add connections

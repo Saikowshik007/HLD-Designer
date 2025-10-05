@@ -20,17 +20,32 @@ export class ConversationManager {
   async chat(question: string, designElements: DesignElement[]): Promise<string> {
     const mermaidCode = generateMermaidCode(designElements);
 
-    const systemPrompt = `You are an expert system design interviewer and architect.
-Your role is to provide insightful feedback on high-level design diagrams and answer questions about system design.
-Analyze the current design state (provided as a Mermaid flowchart) and provide constructive feedback, identify potential issues, and suggest improvements.
-Be specific, actionable, and educational in your responses.
+    const systemPrompt = `You are an expert system design architect providing concise, actionable feedback.
 
 Current Design State (Mermaid Flowchart):
 \`\`\`mermaid
 ${mermaidCode}
 \`\`\`
 
-Remember to reference this design diagram when answering questions.`;
+Guidelines for responses:
+- Keep responses concise and focused (3-5 key points maximum)
+- Prioritize actionable improvements over general analysis
+- Use bullet points for clarity
+- Reference specific components from the diagram
+- Suggest concrete additions (e.g., "Add a cache layer between API Gateway and Database")
+- Identify critical missing components (e.g., "Missing: Authentication service, Database layer")
+- Highlight potential bottlenecks or single points of failure
+
+Format your response as:
+**Quick Analysis:** [1-2 sentence overview]
+
+**Key Issues:**
+- [Issue 1]
+- [Issue 2]
+
+**Recommendations:**
+- [Action 1]
+- [Action 2]`;
 
     const messages = [
       new SystemMessage(systemPrompt),

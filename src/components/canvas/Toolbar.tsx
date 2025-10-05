@@ -1,16 +1,33 @@
+import { useState, useRef, useEffect } from 'react';
 import { useCanvasStore } from '@/store/canvasStore';
-import { MousePointer, Trash2, ZoomIn, ZoomOut, Undo, Redo, StickyNote as StickyNoteIcon, Tag } from 'lucide-react';
+import { MousePointer, Trash2, ZoomIn, ZoomOut, Undo, Redo, StickyNote as StickyNoteIcon, Tag, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 
-interface ToolbarProps {
-  onCategoryClick?: () => void;
-}
+const CATEGORIES = [
+  { id: 'functional' as const, label: 'Functional Requirements', color: '#fef3c7', stroke: '#fbbf24' },
+  { id: 'non-functional' as const, label: 'Non-Functional Requirements', color: '#fecaca', stroke: '#f87171' },
+  { id: 'notes' as const, label: 'Notes', color: '#d1fae5', stroke: '#34d399' },
+  { id: 'general' as const, label: 'General', color: '#e0e7ff', stroke: '#818cf8' },
+];
 
-export const Toolbar = ({ onCategoryClick }: ToolbarProps) => {
-  const { tool, selectedId, elements, zoom, setTool, deleteElement, setZoom, undo, redo, canUndo, canRedo } = useCanvasStore();
+export const Toolbar = () => {
+  const { tool, selectedId, elements, zoom, setTool, deleteElement, setZoom, undo, redo, canUndo, canRedo, updateElement } = useCanvasStore();
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const selectedElement = elements.find(el => el.id === selectedId);
   const isStickyNoteSelected = selectedElement?.type === 'sticky-note';
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const tools = [
     { id: 'select' as const, icon: MousePointer, label: 'Select & Move' },
@@ -104,17 +121,49 @@ export const Toolbar = ({ onCategoryClick }: ToolbarProps) => {
 
       {selectedId && (
         <div className="flex items-center gap-1">
-          {isStickyNoteSelected && onCategoryClick && (
-            <button
-              onClick={onCategoryClick}
-              className="px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 flex items-center gap-2"
-              title="Change Category (C)"
-            >
-              <Tag className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {(selectedElement.category || 'general').replace('-', ' ').toUpperCase()}
-              </span>
-            </button>
+          {isStickyNoteSelected && selectedElement && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className="px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 flex items-center gap-2 border border-gray-300"
+                title="Change Category (C)"
+              >
+                <Tag className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {(selectedElement.category || 'general').replace('-', ' ').toUpperCase()}
+                </span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+
+              {showCategoryDropdown && (
+                <div className="absolute top-full mt-1 left-0 bg-white rounded-lg shadow-xl border border-gray-200 z-[100] min-w-[280px]">
+                  <div className="p-2">
+                    <div className="text-xs font-semibold text-gray-500 px-2 py-1 mb-1">SELECT CATEGORY</div>
+                    {CATEGORIES.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          updateElement(selectedElement.id, { category: cat.id });
+                          setShowCategoryDropdown(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2 transition-colors ${
+                          (selectedElement.category || 'general') === cat.id ? 'bg-gray-50' : ''
+                        }`}
+                      >
+                        <div
+                          className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        <span className="text-sm text-gray-700 flex-1">{cat.label}</span>
+                        {(selectedElement.category || 'general') === cat.id && (
+                          <span className="text-primary-600 text-sm font-bold">✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           <button
             onClick={() => deleteElement(selectedId)}

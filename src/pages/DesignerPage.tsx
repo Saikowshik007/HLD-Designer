@@ -8,8 +8,6 @@ import { Canvas } from '@/components/canvas/Canvas';
 import { ComponentPalette } from '@/components/canvas/ComponentPalette';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { DesignsList } from '@/components/design/DesignsList';
-import { CategorySelector } from '@/components/canvas/CategorySelector';
-
 export const DesignerPage = () => {
   const { user } = useAuthStore();
   const { currentDesign, saveDesign, loadDesign, loadLastDesign, createNewDesign } = useDesignStore();
@@ -17,7 +15,6 @@ export const DesignerPage = () => {
   const [showDesignsList, setShowDesignsList] = useState(false);
   const [designTitle, setDesignTitle] = useState('Untitled Design');
   const [canvasSize, setCanvasSize] = useState({ width: 1400, height: 900 });
-  const [showCategorySelector, setShowCategorySelector] = useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const hasUnsavedChanges = useRef(false);
   const isInitialLoad = useRef(true);
@@ -112,17 +109,6 @@ export const DesignerPage = () => {
           deleteElement(selectedId);
         }
       }
-      // Toggle category selector: C key (when sticky note is selected)
-      else if (e.key === 'c' && selectedId) {
-        const target = e.target as HTMLElement;
-        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-          const element = elements.find(el => el.id === selectedId);
-          if (element?.type === 'sticky-note') {
-            e.preventDefault();
-            setShowCategorySelector(prev => !prev);
-          }
-        }
-      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -143,9 +129,6 @@ export const DesignerPage = () => {
     createNewDesign();
   };
 
-  const selectedElement = elements.find(el => el.id === selectedId);
-  const showStickyNoteCategory = selectedElement?.type === 'sticky-note';
-
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <Header
@@ -162,18 +145,7 @@ export const DesignerPage = () => {
         </aside>
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
-          <div className="relative">
-            <Toolbar onCategoryClick={() => setShowCategorySelector(prev => !prev)} />
-            {showStickyNoteCategory && showCategorySelector && selectedElement && (
-              <div className="absolute top-full right-4 z-50">
-                <CategorySelector
-                  elementId={selectedElement.id}
-                  currentCategory={selectedElement.category || 'general'}
-                  onClose={() => setShowCategorySelector(false)}
-                />
-              </div>
-            )}
-          </div>
+          <Toolbar />
           <div ref={canvasContainerRef} className="flex-1 bg-gray-50 flex items-center justify-center overflow-hidden">
             <Canvas width={canvasSize.width} height={canvasSize.height} />
           </div>

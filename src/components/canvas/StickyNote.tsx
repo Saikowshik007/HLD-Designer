@@ -35,11 +35,69 @@ export const StickyNote = ({ element, isSelected, onSelect, onDragEnd, onDblClic
       x={element.x}
       y={element.y}
       draggable
-      onClick={onSelect}
-      onTap={onSelect}
-      onDragEnd={onDragEnd}
-      onDblClick={onDblClick}
-      onDblTap={onDblClick}
+      onClick={(e) => {
+        e.cancelBubble = true;
+        onSelect();
+      }}
+      onTap={(e) => {
+        e.cancelBubble = true;
+        onSelect();
+      }}
+      onDragStart={(e) => {
+        e.target.to({
+          scaleX: 1.05,
+          scaleY: 1.05,
+          rotation: 2,
+          shadowOffsetX: 10,
+          shadowOffsetY: 10,
+          shadowBlur: 20,
+          shadowOpacity: 0.3,
+          duration: 0.1,
+        });
+      }}
+      onDragEnd={(e) => {
+        e.target.to({
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+          shadowOffsetX: 2,
+          shadowOffsetY: 2,
+          shadowBlur: 5,
+          shadowOpacity: 0.3,
+          duration: 0.2,
+        });
+        onDragEnd(e);
+      }}
+      onDblClick={(e) => {
+        e.cancelBubble = true;
+        onDblClick();
+      }}
+      onDblTap={(e) => {
+        e.cancelBubble = true;
+        onDblClick();
+      }}
+      onMouseEnter={(e) => {
+        const group = e.target.findAncestor('Group');
+        if (group) {
+          group.to({
+            scaleX: 1.03,
+            scaleY: 1.03,
+            rotation: -1,
+            duration: 0.15,
+          });
+        }
+      }}
+      onMouseLeave={(e) => {
+        const group = e.target.findAncestor('Group');
+        if (group) {
+          group.to({
+            scaleX: 1,
+            scaleY: 1,
+            rotation: 0,
+            duration: 0.15,
+          });
+        }
+      }}
     >
       {/* Shadow effect */}
       <Rect

@@ -2,7 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useCanvasStore } from '@/store/canvasStore';
+import { useDesignStore } from '@/store/designStore';
 import { getLangChainService } from '@/services/langchainService';
+import type { ChatMessage } from '@/types';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -18,6 +21,7 @@ interface ChatPanelProps {
 export const ChatPanel = ({ onResize }: ChatPanelProps) => {
   const { user } = useAuthStore();
   const { elements } = useCanvasStore();
+  const { currentDesign, updateDesign } = useDesignStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +40,21 @@ export const ChatPanel = ({ onResize }: ChatPanelProps) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load chat history when design changes
+  useEffect(() => {
+    if (currentDesign?.chatHistory) {
+      const loadedMessages: Message[] = currentDesign.chatHistory.map((msg, idx) => ({
+        id: `${msg.timestamp}-${idx}`,
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp,
+      }));
+      setMessages(loadedMessages);
+    } else {
+      setMessages([]);
+    }
+  }, [currentDesign?.id]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -98,7 +117,19 @@ export const ChatPanel = ({ onResize }: ChatPanelProps) => {
         timestamp: Date.now(),
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => {
+        const newMessages = [...prev, assistantMessage];
+        // Save to design
+        if (currentDesign && user) {
+          const chatHistory: ChatMessage[] = newMessages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp,
+          }));
+          updateDesign(user.uid, currentDesign.id, { chatHistory });
+        }
+        return newMessages;
+      });
     } catch (error) {
       console.error('Chat error:', error);
       const errorMessage: Message = {
@@ -118,6 +149,11 @@ export const ChatPanel = ({ onResize }: ChatPanelProps) => {
       const langChainService = getLangChainService(user.llmApiKey, user.llmModel);
       langChainService.clearHistory();
       setMessages([]);
+
+      // Clear from design
+      if (currentDesign && user) {
+        updateDesign(user.uid, currentDesign.id, { chatHistory: [] });
+      }
     }
   };
 
@@ -207,7 +243,13 @@ export const ChatPanel = ({ onResize }: ChatPanelProps) => {
                   : 'bg-gray-100 text-gray-800'
               }`}
             >
-              <div className="whitespace-pre-wrap">{message.content}</div>
+              {message.role === 'assistant' ? (
+                <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-1">
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap">{message.content}</div>
+              )}
             </div>
           </div>
         ))}

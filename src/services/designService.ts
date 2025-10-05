@@ -122,4 +122,14 @@ export const designService = {
   async deleteDesign(designId: string): Promise<void> {
     await deleteDoc(doc(db, DESIGNS_COLLECTION, designId));
   },
+
+  async updateDesign(designId: string, updates: Partial<Design>): Promise<void> {
+    const designRef = doc(db, DESIGNS_COLLECTION, designId);
+    const now = Date.now();
+
+    await setDoc(designRef, {
+      ...updates,
+      updatedAt: Timestamp.fromMillis(now),
+    }, { merge: true });
+  },
 };

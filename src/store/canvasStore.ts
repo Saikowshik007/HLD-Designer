@@ -60,7 +60,20 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   deleteElement: (id) =>
     set((state) => {
-      const newElements = state.elements.filter((el) => el.id !== id);
+      // Remove the element and all connectors attached to it
+      const newElements = state.elements.filter((el) => {
+        // Remove the element itself
+        if (el.id === id) return false;
+
+        // Remove connectors that are connected to this element
+        if (el.type === 'connector' &&
+            (el.startElementId === id || el.endElementId === id)) {
+          return false;
+        }
+
+        return true;
+      });
+
       const newHistory = state.history.slice(0, state.historyIndex + 1);
       newHistory.push(newElements);
 
