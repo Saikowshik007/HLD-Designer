@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useDesignStore } from '@/store/designStore';
 import { useCanvasStore } from '@/store/canvasStore';
 import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
 import { Toolbar } from '@/components/canvas/Toolbar';
 import { Canvas } from '@/components/canvas/Canvas';
 import { ComponentPalette } from '@/components/canvas/ComponentPalette';
@@ -148,7 +149,7 @@ export const DesignerPage = () => {
         {/* Left sidebar - Hidden on mobile, shows on md+ */}
         <aside className="hidden md:flex md:w-56 lg:w-64 bg-white border-r border-gray-200 flex-col">
           {/* Tab Switcher */}
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-gray-200 flex-shrink-0">
             <button
               onClick={() => setLeftPanelTab('components')}
               className={`flex-1 px-2 lg:px-4 py-3 text-xs lg:text-sm font-medium flex items-center justify-center gap-1 lg:gap-2 transition-colors ${
@@ -173,8 +174,8 @@ export const DesignerPage = () => {
             </button>
           </div>
 
-          {/* Panel Content */}
-          <div className="flex-1 overflow-hidden">
+          {/* Panel Content - scrollable */}
+          <div className="flex-1 overflow-y-auto">
             {leftPanelTab === 'components' ? (
               <ComponentPalette />
             ) : (
@@ -193,6 +194,10 @@ export const DesignerPage = () => {
           </div>
           <div className="flex-shrink-0">
             <ChatPanel onResize={updateCanvasSize} selectedTopic={selectedTopic} />
+          </div>
+          {/* Footer below chat window */}
+          <div className="flex-shrink-0">
+            <Footer />
           </div>
         </main>
       </div>
