@@ -274,13 +274,19 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
     }
   }, [messages, autoSpeak, isLoading, user?.voiceRate, user?.voicePitch]);
 
-  // Global spacebar shortcut for voice input (when not in textarea)
+  // Global spacebar shortcut for voice input (when not in any input field)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only activate if space is pressed and we're not in the textarea
+      const activeElement = document.activeElement;
+      const isTyping =
+        activeElement?.tagName === 'INPUT' ||
+        activeElement?.tagName === 'TEXTAREA' ||
+        (activeElement as HTMLElement)?.isContentEditable;
+
+      // Only activate if space is pressed and we're not typing anywhere
       if (
         e.code === 'Space' &&
-        document.activeElement !== textareaRef.current &&
+        !isTyping &&
         !isSpaceHeldRef.current &&
         !isRecording &&
         !isLoading
