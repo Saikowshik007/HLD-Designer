@@ -3,7 +3,7 @@ import { Send, ChevronDown, ChevronUp, Trash2, Play, Mic, Square, Volume2, Volum
 import { useAuthStore } from '@/store/authStore';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useDesignStore } from '@/store/designStore';
-import { getLangChainService } from '@/services/langchainService';
+import { getLangChainService, type ConversationMode } from '@/services/langchainService';
 import { getVoiceService } from '@/services/voiceService';
 import { chatService, type ChatMessage } from '@/services/chatService';
 import type { InterviewTopic } from '@/data/interviewTopics';
@@ -30,6 +30,7 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
   const [dragStartHeight, setDragStartHeight] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(user?.voiceAutoSpeak || false);
+  const [conversationMode, setConversationMode] = useState<ConversationMode>('practice');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -120,6 +121,7 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
 
       // Use LangChain for conversation management
       const langChainService = getLangChainService(user.llmApiKey, user.llmModel);
+      langChainService.setMode(conversationMode); // Set mode before chat
       const responseText = await langChainService.chat(userMessageContent, elements);
 
       // Save assistant message to Firebase
@@ -340,6 +342,31 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
           <span className="text-xs text-gray-500 hidden sm:inline">(LangChain)</span>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
+          {/* Mode Toggle */}
+          <div className="flex items-center gap-0.5 bg-gray-100 rounded p-0.5 mr-1">
+            <button
+              onClick={() => setConversationMode('practice')}
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                conversationMode === 'practice'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Practice Mode: Helpful feedback and learning"
+            >
+              Practice
+            </button>
+            <button
+              onClick={() => setConversationMode('interview')}
+              className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                conversationMode === 'interview'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Interview Mode: Evaluation and testing"
+            >
+              Interview
+            </button>
+          </div>
           <button
             onClick={toggleAutoSpeak}
             className={`p-1 hover:bg-gray-100 rounded ${autoSpeak ? 'bg-primary-100' : ''}`}
