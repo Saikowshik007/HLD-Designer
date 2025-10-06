@@ -209,10 +209,29 @@ export class VoiceService {
    * Clean markdown formatting from text for better speech output
    */
   private cleanTextForSpeech(text: string): string {
-    return text
-      // Remove code blocks
-      .replace(/```[\s\S]*?```/g, 'code block')
+    let cleaned = text
+      // Remove code blocks entirely (don't say "code block")
+      .replace(/```[\s\S]*?```/g, '')
       .replace(/`([^`]+)`/g, '$1')
+      // Remove labels like **Interviewer:**, **Question:**, **Assume:**, etc.
+      .replace(/\*\*[^*]+:\*\*/g, '')
+      // Remove ALL arrow characters and symbols (expanded list)
+      .replace(/[\u2192\u2190\u2194\u2191\u2193\u21D2\u21D0\u21D4\u27A1\u2B05\u2B06\u2B07]/g, ' ')
+      .replace(/→/g, ' ')
+      .replace(/←/g, ' ')
+      .replace(/↔/g, ' ')
+      .replace(/↑/g, ' ')
+      .replace(/↓/g, ' ')
+      .replace(/⇒/g, ' ')
+      .replace(/⇐/g, ' ')
+      .replace(/⇔/g, ' ')
+      .replace(/➡/g, ' ')
+      .replace(/⬅/g, ' ')
+      .replace(/⬆/g, ' ')
+      .replace(/⬇/g, ' ')
+      .replace(/->/g, ' ')
+      .replace(/<-/g, ' ')
+      .replace(/=>/g, ' ')
       // Remove markdown headers
       .replace(/^#{1,6}\s+/gm, '')
       // Remove bold/italic markers
@@ -234,9 +253,18 @@ export class VoiceService {
       .replace(/^\*{3,}$/gm, '')
       // Remove blockquotes
       .replace(/^>\s+/gm, '')
-      // Clean up extra whitespace
+      // Clean up extra whitespace and newlines
       .replace(/\n{3,}/g, '\n\n')
+      .replace(/\n/g, '. ') // Convert newlines to pauses
+      .replace(/\.\s*\./g, '.') // Remove double periods
+      .replace(/\s+/g, ' ') // Normalize spaces
       .trim();
+
+    // Log for debugging
+    console.log('Original text:', text.substring(0, 100));
+    console.log('Cleaned text:', cleaned.substring(0, 100));
+
+    return cleaned;
   }
 
   /**

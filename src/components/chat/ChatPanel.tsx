@@ -151,7 +151,18 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
   };
 
   const handleStartInterview = async () => {
-    if (!selectedTopic || !user?.llmApiKey || !currentDesign) return;
+    if (!selectedTopic) {
+      alert('Please select a topic first');
+      return;
+    }
+    if (!user?.llmApiKey) {
+      alert('Please configure your LLM API key in settings');
+      return;
+    }
+    if (!currentDesign) {
+      alert('Please create or select a design first');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -170,6 +181,7 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
       setInterviewStarted(true);
     } catch (error) {
       console.error('Start interview error:', error);
+      alert(`Failed to start interview: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
