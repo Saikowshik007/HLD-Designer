@@ -136,7 +136,7 @@ export const DesignerPage = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       <Header
         onSave={handleSave}
         onShowDesigns={() => setShowDesignsList(true)}
@@ -147,15 +147,15 @@ export const DesignerPage = () => {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar - Hidden on mobile, shows on md+ */}
-        <aside className="hidden md:flex md:w-56 lg:w-64 bg-white border-r border-gray-200 flex-col">
+        <aside className="hidden md:flex md:w-56 lg:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col">
           {/* Tab Switcher */}
-          <div className="flex border-b border-gray-200 flex-shrink-0">
+          <div className="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
             <button
               onClick={() => setLeftPanelTab('components')}
               className={`flex-1 px-2 lg:px-4 py-3 text-xs lg:text-sm font-medium flex items-center justify-center gap-1 lg:gap-2 transition-colors ${
                 leftPanelTab === 'components'
-                  ? 'bg-white text-primary-600 border-b-2 border-primary-600'
-                  : 'bg-gray-50 text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
               <Shapes className="w-4 h-4" />
@@ -165,8 +165,8 @@ export const DesignerPage = () => {
               onClick={() => setLeftPanelTab('interview')}
               className={`flex-1 px-2 lg:px-4 py-3 text-xs lg:text-sm font-medium flex items-center justify-center gap-1 lg:gap-2 transition-colors ${
                 leftPanelTab === 'interview'
-                  ? 'bg-white text-primary-600 border-b-2 border-primary-600'
-                  : 'bg-gray-50 text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
               <MessageSquare className="w-4 h-4" />
@@ -189,7 +189,7 @@ export const DesignerPage = () => {
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
           <Toolbar />
-          <div ref={canvasContainerRef} className="flex-1 bg-gray-50 flex items-center justify-center overflow-hidden">
+          <div ref={canvasContainerRef} className="flex-1 bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
             <Canvas width={canvasSize.width} height={canvasSize.height} />
           </div>
           <div className="flex-shrink-0">

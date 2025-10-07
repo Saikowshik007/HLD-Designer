@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/authService';
+import { useThemeStore } from '@/store/themeStore';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -36,12 +37,14 @@ const VOICE_LANGUAGES = [
 
 export const SettingsModal = ({ onClose }: SettingsModalProps) => {
   const { user } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
   const [apiKey, setApiKey] = useState(user?.llmApiKey || '');
   const [selectedModel, setSelectedModel] = useState(user?.llmModel || 'gpt-4o');
   const [voiceLanguage, setVoiceLanguage] = useState(user?.voiceLanguage || 'en-US');
   const [voiceAutoSpeak, setVoiceAutoSpeak] = useState(user?.voiceAutoSpeak || false);
   const [voiceRate, setVoiceRate] = useState(user?.voiceRate || 0.95);
   const [voicePitch, setVoicePitch] = useState(user?.voicePitch || 1.1);
+  const [selectedTheme, setSelectedTheme] = useState(user?.theme || theme);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -53,8 +56,29 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
       setVoiceAutoSpeak(user.voiceAutoSpeak || false);
       setVoiceRate(user.voiceRate || 0.95);
       setVoicePitch(user.voicePitch || 1.1);
+      setSelectedTheme(user.theme || theme);
     }
-  }, [user]);
+  }, [user?.uid]); // Only reset when user changes, not when theme changes
+
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    console.log('=== handleThemeChange START ===');
+    console.log('New theme requested:', newTheme);
+    console.log('Current selectedTheme:', selectedTheme);
+
+    setSelectedTheme(newTheme);
+    console.log('setSelectedTheme called');
+
+    setTheme(newTheme);
+    console.log('setTheme called with:', newTheme);
+
+    // Check immediately after
+    setTimeout(() => {
+      console.log('After 100ms - document.className:', document.documentElement.className);
+      console.log('After 100ms - has dark class:', document.documentElement.classList.contains('dark'));
+    }, 100);
+
+    console.log('=== handleThemeChange END ===');
+  };
 
   const handleSave = async () => {
     if (!user || !apiKey.trim()) {
@@ -73,6 +97,7 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
         voiceAutoSpeak,
         voiceRate,
         voicePitch,
+        theme: selectedTheme,
       });
 
       setMessage({ type: 'success', text: 'Settings saved successfully!' });
@@ -93,23 +118,65 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Settings</h2>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">Settings</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto flex-1">
+          {/* Theme Section */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
+              Appearance
+              <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">(Click Save to persist)</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleThemeChange('light');
+                }}
+                className={`flex items-center justify-center gap-2 p-4 border-2 rounded-lg transition-all ${
+                  selectedTheme === 'light'
+                    ? 'border-primary-600 bg-primary-100 text-primary-700 dark:border-primary-500 dark:bg-primary-900/40 dark:text-primary-300 shadow-md'
+                    : 'border-gray-300 hover:border-gray-400 text-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:text-gray-300'
+                }`}
+              >
+                <Sun className="w-5 h-5" />
+                <span className="font-medium">Light</span>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleThemeChange('dark');
+                }}
+                className={`flex items-center justify-center gap-2 p-4 border-2 rounded-lg transition-all ${
+                  selectedTheme === 'dark'
+                    ? 'border-primary-600 bg-primary-100 text-primary-700 dark:border-primary-500 dark:bg-primary-900/40 dark:text-primary-300 shadow-md'
+                    : 'border-gray-300 hover:border-gray-400 text-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:text-gray-300'
+                }`}
+              >
+                <Moon className="w-5 h-5" />
+                <span className="font-medium">Dark</span>
+              </button>
+            </div>
+          </div>
+
           {/* API Key Section */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
               OpenAI API Key
             </label>
             <input
@@ -117,9 +184,9 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="sk-..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               Your API key is stored securely in Firebase and never shared. Get your key from{' '}
               <a
                 href="https://platform.openai.com/api-keys"
@@ -134,7 +201,7 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
 
           {/* Model Selection */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
               AI Model
             </label>
             <div className="space-y-2">
@@ -143,8 +210,8 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
                   key={model.id}
                   className={`flex items-start p-4 border rounded-lg cursor-pointer transition-colors ${
                     selectedModel === model.id
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
                   <input
@@ -156,8 +223,8 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
                     className="mt-1 mr-3"
                   />
                   <div>
-                    <div className="font-medium text-gray-800">{model.name}</div>
-                    <div className="text-sm text-gray-600">{model.description}</div>
+                    <div className="font-medium text-gray-800 dark:text-gray-100">{model.name}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">{model.description}</div>
                   </div>
                 </label>
               ))}
@@ -165,18 +232,18 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
           </div>
 
           {/* Voice Settings */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Voice Settings</h3>
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Voice Settings</h3>
 
             {/* Voice Language */}
             <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                 Speech Recognition Language
               </label>
               <select
                 value={voiceLanguage}
                 onChange={(e) => setVoiceLanguage(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {VOICE_LANGUAGES.map((lang) => (
                   <option key={lang.code} value={lang.code}>
@@ -184,7 +251,7 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
                   </option>
                 ))}
               </select>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Select your accent/language for better voice recognition accuracy
               </p>
             </div>
@@ -199,10 +266,10 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
                   className="mr-3 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                 />
                 <div>
-                  <div className="text-sm font-semibold text-gray-700">
+                  <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                     Auto-speak AI responses
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
                     Automatically read AI responses aloud using text-to-speech
                   </div>
                 </div>
@@ -211,7 +278,7 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
 
             {/* Voice Speed */}
             <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                 Speech Speed: {voiceRate.toFixed(2)}x
               </label>
               <input
@@ -228,14 +295,14 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
                 <span>Normal (1.0x)</span>
                 <span>Faster (2.0x)</span>
               </div>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Lower = slower, more deliberate | Higher = faster, more energetic (Recommended: 0.9-1.0)
               </p>
             </div>
 
             {/* Voice Pitch */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                 Voice Pitch: {voicePitch.toFixed(2)}
               </label>
               <input
@@ -247,12 +314,12 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
                 onChange={(e) => setVoicePitch(parseFloat(e.target.value))}
                 className="w-full"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span>Lower (0.5)</span>
                 <span>Normal (1.0)</span>
                 <span>Higher (2.0)</span>
               </div>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Lower = deeper, more authoritative | Higher = warmer, more friendly (Recommended: 1.0-1.2)
               </p>
             </div>
@@ -273,17 +340,17 @@ export const SettingsModal = ({ onClose }: SettingsModalProps) => {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-200 flex-shrink-0">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving || !apiKey.trim()}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-primary-600 dark:bg-primary-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
             {isSaving ? 'Saving...' : 'Save Settings'}

@@ -650,7 +650,7 @@ export const Canvas = ({ width, height }: CanvasProps) => {
 
   return (
     <div
-      className="border-2 border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm"
+      className="border-2 border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-sm"
       style={{ cursor: isPanning ? 'grabbing' : 'default' }}
     >
       <Stage

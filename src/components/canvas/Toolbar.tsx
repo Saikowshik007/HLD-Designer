@@ -35,8 +35,8 @@ export const Toolbar = () => {
   ];
 
   return (
-    <div className="flex items-center gap-2 p-4 bg-white border-b border-gray-200">
-      <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+    <div className="flex items-center gap-2 p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
         {tools.map((t) => {
           const Icon = t.icon;
           const isActive = tool === t.id;
@@ -47,8 +47,8 @@ export const Toolbar = () => {
               className={clsx(
                 'p-2 rounded-lg transition-colors relative',
                 isActive
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'hover:bg-gray-100 text-gray-700'
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
               )}
               title={t.label}
             >
@@ -59,26 +59,26 @@ export const Toolbar = () => {
       </div>
 
       {tool === 'select' && (
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-gray-500 dark:text-gray-400">
           Drag to move • Double-click to edit text
         </div>
       )}
 
       {tool === 'sticky-note' && (
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-gray-500 dark:text-gray-400">
           Click anywhere to add a sticky note
         </div>
       )}
 
-      <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+      <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
         <button
           onClick={undo}
           disabled={!canUndo()}
           className={clsx(
             'p-2 rounded-lg transition-colors',
             canUndo()
-              ? 'hover:bg-gray-100 text-gray-700'
-              : 'text-gray-300 cursor-not-allowed'
+              ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
+              : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
           )}
           title="Undo (Ctrl+Z)"
         >
@@ -90,8 +90,8 @@ export const Toolbar = () => {
           className={clsx(
             'p-2 rounded-lg transition-colors',
             canRedo()
-              ? 'hover:bg-gray-100 text-gray-700'
-              : 'text-gray-300 cursor-not-allowed'
+              ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
+              : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
           )}
           title="Redo (Ctrl+Y)"
         >
@@ -99,20 +99,20 @@ export const Toolbar = () => {
         </button>
       </div>
 
-      <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+      <div className="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
         <button
           onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-700"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
           title="Zoom Out"
         >
           <ZoomOut className="w-5 h-5" />
         </button>
-        <span className="text-sm text-gray-600 min-w-[3rem] text-center">
+        <span className="text-sm text-gray-600 dark:text-gray-300 min-w-[3rem] text-center">
           {Math.round(zoom * 100)}%
         </span>
         <button
           onClick={() => setZoom(Math.min(2, zoom + 0.1))}
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-700"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
           title="Zoom In"
         >
           <ZoomIn className="w-5 h-5" />
@@ -125,7 +125,7 @@ export const Toolbar = () => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className="px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 flex items-center gap-2 border border-gray-300"
+                className="px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 flex items-center gap-2 border border-gray-300 dark:border-gray-600"
                 title="Change Category (C)"
               >
                 <Tag className="w-4 h-4" />
@@ -136,9 +136,9 @@ export const Toolbar = () => {
               </button>
 
               {showCategoryDropdown && (
-                <div className="absolute top-full mt-1 left-0 bg-white rounded-lg shadow-xl border border-gray-200 z-[100] min-w-[280px]">
+                <div className="absolute top-full mt-1 left-0 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[100] min-w-[280px]">
                   <div className="p-2">
-                    <div className="text-xs font-semibold text-gray-500 px-2 py-1 mb-1">SELECT CATEGORY</div>
+                    <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-2 py-1 mb-1">SELECT CATEGORY</div>
                     {CATEGORIES.map(cat => (
                       <button
                         key={cat.id}
@@ -146,17 +146,17 @@ export const Toolbar = () => {
                           updateElement(selectedElement.id, { category: cat.id });
                           setShowCategoryDropdown(false);
                         }}
-                        className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 flex items-center gap-2 transition-colors ${
-                          (selectedElement.category || 'general') === cat.id ? 'bg-gray-50' : ''
+                        className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors ${
+                          (selectedElement.category || 'general') === cat.id ? 'bg-gray-50 dark:bg-gray-700' : ''
                         }`}
                       >
                         <div
-                          className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
+                          className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600 flex-shrink-0"
                           style={{ backgroundColor: cat.color }}
                         />
-                        <span className="text-sm text-gray-700 flex-1">{cat.label}</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 flex-1">{cat.label}</span>
                         {(selectedElement.category || 'general') === cat.id && (
-                          <span className="text-primary-600 text-sm font-bold">✓</span>
+                          <span className="text-primary-600 dark:text-primary-400 text-sm font-bold">✓</span>
                         )}
                       </button>
                     ))}
@@ -167,7 +167,7 @@ export const Toolbar = () => {
           )}
           <button
             onClick={() => deleteElement(selectedId)}
-            className="p-2 rounded-lg hover:bg-red-100 text-red-600"
+            className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400"
             title="Delete Selected (Del)"
           >
             <Trash2 className="w-5 h-5" />

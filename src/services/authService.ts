@@ -45,6 +45,7 @@ export const authService = {
       voiceAutoSpeak: userData?.voiceAutoSpeak || false,
       voiceRate: userData?.voiceRate || 0.95,
       voicePitch: userData?.voicePitch || 1.1,
+      theme: userData?.theme || 'light',
     };
   },
 
@@ -57,6 +58,7 @@ export const authService = {
       voiceAutoSpeak?: boolean;
       voiceRate?: number;
       voicePitch?: number;
+      theme?: 'light' | 'dark';
     }
   ): Promise<void> {
     await setDoc(doc(db, 'users', userId), settings, { merge: true });
@@ -82,6 +84,7 @@ export const authService = {
           voiceAutoSpeak: userData?.voiceAutoSpeak || false,
           voiceRate: userData?.voiceRate || 0.95,
           voicePitch: userData?.voicePitch || 1.1,
+          theme: userData?.theme || 'light',
         });
       } else {
         callback(null);
@@ -105,6 +108,7 @@ export const authService = {
         voiceAutoSpeak: userData?.voiceAutoSpeak || false,
         voiceRate: userData?.voiceRate || 0.95,
         voicePitch: userData?.voicePitch || 1.1,
+        theme: userData?.theme || 'light',
       };
     }
     return null;

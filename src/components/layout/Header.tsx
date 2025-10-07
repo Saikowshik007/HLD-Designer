@@ -48,13 +48,13 @@ export const Header = ({ onSave, onShowDesigns, onNewDesign, designTitle, onTitl
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
       <div className="px-3 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           {/* Left side - Logo and Title */}
           <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-            <h1 className="text-lg sm:text-2xl font-bold text-primary-600 whitespace-nowrap">HLD Designer</h1>
-            <div className="hidden md:flex items-center gap-2 text-sm text-gray-600 min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold text-primary-600 dark:text-primary-400 whitespace-nowrap">HLD Designer</h1>
+            <div className="hidden md:flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 min-w-0">
               <FileText className="w-4 h-4 flex-shrink-0" />
               {isEditingTitle ? (
                 <input
@@ -63,19 +63,19 @@ export const Header = ({ onSave, onShowDesigns, onNewDesign, designTitle, onTitl
                   onChange={(e) => setTempTitle(e.target.value)}
                   onBlur={handleTitleSave}
                   onKeyDown={handleTitleKeyDown}
-                  className="font-medium px-2 py-1 border border-primary-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 w-full max-w-xs"
+                  className="font-medium px-2 py-1 border border-primary-300 dark:border-primary-600 dark:bg-gray-700 dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 w-full max-w-xs"
                   autoFocus
                 />
               ) : (
                 <button
                   onClick={handleTitleEdit}
-                  className="font-medium px-2 py-1 hover:bg-gray-100 rounded flex items-center gap-1 group truncate"
+                  className="font-medium px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center gap-1 group truncate"
                 >
                   <span className="truncate">{designTitle}</span>
                   <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                 </button>
               )}
-              <span className="text-gray-400">•</span>
+              <span className="text-gray-400 dark:text-gray-600">•</span>
               <span className="whitespace-nowrap">{elements.length} elements</span>
             </div>
           </div>
@@ -85,7 +85,7 @@ export const Header = ({ onSave, onShowDesigns, onNewDesign, designTitle, onTitl
             {onNewDesign && (
               <button
                 onClick={onNewDesign}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2"
               >
                 <FilePlus className="w-4 h-4" />
                 <span className="hidden xl:inline">New Design</span>
@@ -95,7 +95,7 @@ export const Header = ({ onSave, onShowDesigns, onNewDesign, designTitle, onTitl
             {onShowDesigns && (
               <button
                 onClick={onShowDesigns}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <span className="hidden xl:inline">My Designs</span>
                 <span className="xl:hidden">Designs</span>

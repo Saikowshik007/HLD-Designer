@@ -8,6 +8,7 @@ export interface User {
   voiceAutoSpeak?: boolean;
   voiceRate?: number;
   voicePitch?: number;
+  theme?: 'light' | 'dark';
 }
 
 export interface DesignElement {

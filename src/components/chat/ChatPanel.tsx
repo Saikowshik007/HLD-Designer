@@ -325,13 +325,13 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
 
   if (isCollapsed) {
     return (
-      <div className="border-t border-gray-200 bg-white">
+      <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <button
           onClick={() => {
             setIsCollapsed(false);
             setTimeout(() => onResize?.(), 0);
           }}
-          className="w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2"
+          className="w-full px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-center gap-2"
         >
           <ChevronUp className="w-4 h-4" />
           Show AI Assistant
@@ -344,30 +344,30 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
     <div
       ref={panelRef}
       style={{ height: panelHeight }}
-      className="border-t border-gray-200 bg-white flex flex-col w-full"
+      className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col w-full"
     >
       {/* Resize handle */}
       <div
         onMouseDown={handleMouseDown}
-        className="h-1 bg-gray-200 hover:bg-primary-400 cursor-ns-resize transition-colors"
+        className="h-1 bg-gray-200 dark:bg-gray-700 hover:bg-primary-400 cursor-ns-resize transition-colors"
       />
 
       {/* Header */}
-      <div className="px-3 sm:px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+      <div className="px-3 sm:px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
           <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
-          <h3 className="font-semibold text-gray-800 text-sm sm:text-base truncate">AI Design Assistant</h3>
-          <span className="text-xs text-gray-500 hidden sm:inline">(LangChain)</span>
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm sm:text-base truncate">AI Design Assistant</h3>
+          <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">(LangChain)</span>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {/* Mode Toggle */}
-          <div className="flex items-center gap-0.5 bg-gray-100 rounded p-0.5 mr-1">
+          <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-700 rounded p-0.5 mr-1">
             <button
               onClick={() => setConversationMode('practice')}
               className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
                 conversationMode === 'practice'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
               title="Practice Mode: Helpful feedback and learning"
             >
@@ -377,8 +377,8 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
               onClick={() => setConversationMode('interview')}
               className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
                 conversationMode === 'interview'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
               title="Interview Mode: Evaluation and testing"
             >
@@ -387,22 +387,22 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
           </div>
           <button
             onClick={toggleAutoSpeak}
-            className={`p-1 hover:bg-gray-100 rounded ${autoSpeak ? 'bg-primary-100' : ''}`}
+            className={`p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded ${autoSpeak ? 'bg-primary-100 dark:bg-primary-900' : ''}`}
             title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
           >
             {autoSpeak ? (
-              <Volume2 className="w-4 h-4 text-primary-600" />
+              <Volume2 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
             ) : (
-              <VolumeX className="w-4 h-4 text-gray-600" />
+              <VolumeX className="w-4 h-4 text-gray-600 dark:text-gray-300" />
             )}
           </button>
           {messages.length > 0 && (
             <button
               onClick={handleClearHistory}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded"
               title="Clear conversation history"
             >
-              <Trash2 className="w-4 h-4 text-gray-600" />
+              <Trash2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
             </button>
           )}
           <button
@@ -410,9 +410,9 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
               setIsCollapsed(true);
               setTimeout(() => onResize?.(), 0);
             }}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded"
           >
-            <ChevronDown className="w-4 h-4 text-gray-600" />
+            <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
       </div>
@@ -420,7 +420,7 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4">
         {messages.length === 0 && selectedTopic && !interviewStarted && (
-          <div className="text-center text-gray-500 mt-8">
+          <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
             <p className="text-lg font-medium">Ready to start: {selectedTopic.title}</p>
             <p className="text-sm mt-2 mb-4">{selectedTopic.description}</p>
             <button
@@ -435,7 +435,7 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
         )}
 
         {messages.length === 0 && !selectedTopic && (
-          <div className="text-center text-gray-500 mt-8">
+          <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
             <p className="text-lg font-medium">Select an Interview Topic</p>
             <p className="text-sm mt-2">Choose a topic from the left panel to begin your system design interview.</p>
           </div>
@@ -450,11 +450,11 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
               className={`max-w-[80%] rounded-lg px-4 py-2 ${
                 message.role === 'user'
                   ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-800'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
               }`}
             >
               {message.role === 'assistant' ? (
-                <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-1">
+                <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-1 dark:prose-invert">
                   <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
               ) : (
@@ -466,11 +466,11 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-4 py-2">
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2">
               <div className="flex gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -480,7 +480,7 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
       </div>
 
       {/* Input */}
-      <div className="p-2 sm:p-4 border-t border-gray-200">
+      <div className="p-2 sm:p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex gap-1 sm:gap-2">
           <textarea
             ref={textareaRef}
@@ -492,7 +492,7 @@ export const ChatPanel = ({ onResize, selectedTopic }: ChatPanelProps) => {
                 ? 'Listening...'
                 : 'Type (Enter to send, Shift+Enter for new line) or hold Space to speak...'
             }
-            className="flex-1 px-2 sm:px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm sm:text-base"
+            className="flex-1 px-2 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm sm:text-base"
             rows={2}
             disabled={isLoading || isRecording}
           />

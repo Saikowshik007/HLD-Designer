@@ -39,8 +39,8 @@ export const ComponentPalette = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 p-4">
-      <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
+    <div className="h-full overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4">
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4 uppercase tracking-wide">
         Components
       </h3>
 
@@ -54,7 +54,7 @@ export const ComponentPalette = () => {
           <div key={category.id} className="mb-3">
             <button
               onClick={() => toggleCategory(category.id)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               {isExpanded ? (
                 <ChevronDown className="w-4 h-4" />
@@ -73,7 +73,7 @@ export const ComponentPalette = () => {
                     onClick={() => handleComponentClick(template)}
                     className={clsx(
                       'w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm',
-                      'bg-white hover:bg-primary-50 border border-gray-200 hover:border-primary-300',
+                      'bg-white dark:bg-gray-700 hover:bg-primary-50 dark:hover:bg-primary-900/30 border border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-500',
                       'rounded-lg transition-colors group'
                     )}
                     title={`Click to add ${template.name}`}
@@ -81,7 +81,7 @@ export const ComponentPalette = () => {
                     <span className="text-xl group-hover:scale-110 transition-transform">
                       {template.icon}
                     </span>
-                    <span className="text-gray-700 group-hover:text-primary-700 font-medium">
+                    <span className="text-gray-700 dark:text-gray-200 group-hover:text-primary-700 dark:group-hover:text-primary-400 font-medium">
                       {template.name}
                     </span>
                   </button>
@@ -92,8 +92,8 @@ export const ComponentPalette = () => {
         );
       })}
 
-      <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-xs text-blue-800">
+      <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <p className="text-xs text-blue-800 dark:text-blue-300">
           <strong>Tip:</strong> Click any component to add it to the canvas. Double-click shapes to edit labels.
         </p>
       </div>
