@@ -51,6 +51,15 @@ export const generateMermaidCode = (elements: DesignElement[]): string => {
       case 'server-stack':
         nodeDefinition = `    ${nodeId}[${label}]`;
         break;
+      case 'hexagon':
+        nodeDefinition = `    ${nodeId}{{${label}}}`;
+        break;
+      case 'diamond':
+        nodeDefinition = `    ${nodeId}{${label}}`;
+        break;
+      case 'cube':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
       case 'text':
         nodeDefinition = `    ${nodeId}[${label}]`;
         break;
@@ -112,6 +121,15 @@ export const generateDetailedMermaidCode = (elements: DesignElement[]): string =
         nodeDefinition = `    ${nodeId}[${label}]`;
         break;
       case 'server-stack':
+        nodeDefinition = `    ${nodeId}[${label}]`;
+        break;
+      case 'hexagon':
+        nodeDefinition = `    ${nodeId}{{${label}}}`;
+        break;
+      case 'diamond':
+        nodeDefinition = `    ${nodeId}{${label}}`;
+        break;
+      case 'cube':
         nodeDefinition = `    ${nodeId}[${label}]`;
         break;
       case 'text':

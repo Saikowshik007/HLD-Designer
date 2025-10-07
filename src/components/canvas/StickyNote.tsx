@@ -34,10 +34,13 @@ export const StickyNote = ({ element, isSelected, onSelect, onDragEnd, onDblClic
     <Group
       x={element.x}
       y={element.y}
-      draggable
+      draggable={true}
       onClick={(e) => {
         e.cancelBubble = true;
         onSelect();
+      }}
+      onMouseDown={(e) => {
+        e.cancelBubble = true;
       }}
       onTap={(e) => {
         e.cancelBubble = true;
@@ -56,6 +59,7 @@ export const StickyNote = ({ element, isSelected, onSelect, onDragEnd, onDblClic
         });
       }}
       onDragEnd={(e) => {
+        e.cancelBubble = true;
         e.target.to({
           scaleX: 1,
           scaleY: 1,

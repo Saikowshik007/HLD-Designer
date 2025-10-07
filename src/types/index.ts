@@ -12,7 +12,7 @@ export interface User {
 
 export interface DesignElement {
   id: string;
-  type: 'rectangle' | 'circle' | 'text' | 'connector' | 'sticky-note' | 'database' | 'cylinder' | 'cloud' | 'server-stack';
+  type: 'rectangle' | 'circle' | 'text' | 'connector' | 'sticky-note' | 'database' | 'cylinder' | 'cloud' | 'server-stack' | 'hexagon' | 'diamond' | 'cube';
   x: number;
   y: number;
   width?: number;
