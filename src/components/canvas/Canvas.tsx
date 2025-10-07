@@ -728,6 +728,55 @@ export const Canvas = ({ width, height }: CanvasProps) => {
         <Layer>
           {connectors.map(renderConnector)}
           {shapes.map(renderShape)}
+
+          {/* Empty canvas instructions - fade when elements exist */}
+          {elements.length === 0 && (
+            <Group opacity={0.8}>
+              <Text
+                x={width / (2 * zoom) - 200}
+                y={height / (2 * zoom) - 100}
+                width={400}
+                text="Welcome to HLD Designer!"
+                fontSize={28}
+                fontStyle="bold"
+                fill="#374151"
+                align="center"
+                listening={false}
+              />
+              <Text
+                x={width / (2 * zoom) - 250}
+                y={height / (2 * zoom) - 50}
+                width={500}
+                text="Get started by adding components from the left panel"
+                fontSize={16}
+                fill="#6b7280"
+                align="center"
+                listening={false}
+              />
+              <Text
+                x={width / (2 * zoom) - 250}
+                y={height / (2 * zoom) + 20}
+                width={500}
+                text="💡 Tips:"
+                fontSize={14}
+                fontStyle="bold"
+                fill="#374151"
+                align="center"
+                listening={false}
+              />
+              <Text
+                x={width / (2 * zoom) - 250}
+                y={height / (2 * zoom) + 45}
+                width={500}
+                text={"• Click & drag shapes to move them\n• Ctrl+Click to create connectors\n• Double-click to edit labels\n• Ctrl+Scroll to zoom\n• Click & drag canvas to pan"}
+                fontSize={13}
+                fill="#6b7280"
+                align="center"
+                lineHeight={1.6}
+                listening={false}
+              />
+            </Group>
+          )}
         </Layer>
 
         {/* Separate layer for temporary connector line (always on top) */}
